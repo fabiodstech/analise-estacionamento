@@ -1,0 +1,10 @@
+# Testado com estas versões. Os mínimos abaixo funcionam, mas o app publicado
+# no Streamlit Cloud roda com as versões à direita.
+pandas>=2.0        # testado: 3.0.2
+numpy>=1.24        # testado: 2.4.4
+scikit-learn>=1.3
+scipy>=1.11
+matplotlib>=3.7
+plotly>=5.18       # testado: 7.0.0
+streamlit>=1.30    # testado: 1.63.0
+pyyaml>=6.0

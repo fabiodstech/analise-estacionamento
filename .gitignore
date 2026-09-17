@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# O dataset é GERADO, não versionado (15 MB).
+# Rode: python scripts/Dataset_Final_v13.py
+logs_estacionamento_*.csv
+*.pkl
+
+# Saídas de execução local
+scripts/graficos_*/
+*.zip

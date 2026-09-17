@@ -1,0 +1,14 @@
+# Tema do painel — o mesmo dos carrosséis.
+# O app.py declara este tema por conta própria caso este arquivo não venha
+# junto (a pasta .streamlit é oculta e some com frequência). Os dois precisam
+# dizer a mesma coisa.
+[theme]
+base = "dark"
+backgroundColor = "#070b16"
+secondaryBackgroundColor = "#0b1220"
+primaryColor = "#2b7fff"
+textColor = "#e8eef7"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap, sans-serif"
+
+[browser]
+gatherUsageStats = false

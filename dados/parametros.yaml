@@ -1,0 +1,641 @@
+# ============================================================================
+# parametros.yaml — fonte única de verdade numérica do projeto
+# ============================================================================
+# Gerado em 28/08/2026 a partir de regras_de_negocio.md (rev. 28/08) e da EDA
+# do v12 (eda_v12_achados.md).
+#
+# REGRA DE OURO: um número que não está aqui não pode existir no gerador.
+# O gerador LÊ deste arquivo. O validador LÊ deste arquivo e confere o
+# dataset contra ele. Assim um parâmetro nunca mais diverge da regra escrita
+# sem que um teste quebre.
+#
+# Cada bloco aponta a seção do regras_de_negocio.md que o justifica e a
+# origem do número:
+#   fabio      = informado/confirmado pelo informante
+#   medido     = extraído de dado real (app Clamper, log de cancela)
+#   derivado   = calculado a partir de outro parâmetro
+#   arbitrado  = escolha de modelagem sem respaldo externo (revisar sempre)
+# ============================================================================
+
+meta:
+  versao_alvo: v13
+  seed: 42
+  base_regras: "regras_de_negocio.md rev. 28/08/2026"
+  janela:
+    inicio: 2026-02-13
+    fim: 2026-08-12          # o gerador para aqui; dias posteriores são só
+                             # saídas de estadias longas — não são movimento
+    dias_plenos: 180         # normalizar taxas diárias por este número
+    origem: derivado
+
+# ----------------------------------------------------------------------------
+# MARCO ÚNICO DE MODERNIZAÇÃO — seção 9
+# Três mudanças na mesma data. Não tratar como eventos separados.
+# ----------------------------------------------------------------------------
+marco_modernizacao:
+  data: 2026-06-01
+  origem: fabio
+  efeitos:
+    tabela_precos_unificada: true
+    faturamento_no_erp: true
+    bloqueio_automatico_inadimplente: true
+    saida_empresa_logistica: true      # ⚠ o único efeito que muda VOLUME
+  nota: >
+    Tabela e ERP foram idealizados para sair juntos. A série de bloqueios
+    começa em zero e só existe a partir daqui — artefato de início de
+    coleta, não mudança de comportamento.
+
+# ----------------------------------------------------------------------------
+# CAPACIDADE — seção 23
+# ----------------------------------------------------------------------------
+capacidade:
+  carro:
+    vagas: 378              # 21 andares x 3 elevadores x 6 vagas
+    origem: fabio
+  moto:
+    vagas: 60               # subsolo, área equivalente a 9 vagas de carro
+    origem: fabio
+    # ⚠ DOIS REGIMES. O "~20" informado por Fabio é a situação ATUAL.
+    pico_simultaneo_observado:
+      ate_2026_05_31: 50    # ~20 da base + ~30 da empresa de logística
+      desde_2026_06_01: 20
+    # ⚠ o valor de fev-mai é INOBSERVÁVEL no log (seção 38.2): as passagens
+    #   de pedestre com carrinho usavam o cartão da moto e são contabilizadas
+    #   como saída, subtraindo motos que continuam estacionadas.
+  # denominadores SEPARADOS. Nunca somar nem misturar no mesmo percentual.
+  tomadas_ev:
+    instaladas: 2
+    em_obra: 1
+    origem: fabio
+
+# ----------------------------------------------------------------------------
+# TABELA DE PREÇOS — seção 29
+# ----------------------------------------------------------------------------
+precos:
+  antiga:                    # até 31/05/2026
+    vigencia_ate: 2026-05-31
+    origem: fabio
+    # ⚠ CORRIGIDO 28/08/2026: hora_adicional da tabela ANTIGA é 6,00, não 8,00.
+    #   A seção 29 do regras_de_negocio.md trazia 8,00 nas duas tabelas — era o
+    #   DOCUMENTO que estava desatualizado, o código do v12 estava certo.
+    #   => a hora adicional também foi reajustada em 01/06: 6,00 -> 8,00 (+33%).
+    carro_seg_sex:  {meia_hora: 8,  uma_hora: 12, hora_adicional: 6, diaria_12h: 25, diaria_24h: 50}
+    carro_fds:      {meia_hora: 10, uma_hora: 15, hora_adicional: 6, diaria_12h: 40, diaria_24h: 60}
+    moto_seg_sex:   {meia_hora: 6,  uma_hora: 12, hora_adicional: 6, diaria_12h: 15, diaria_24h: 30}
+    moto_fds:       {meia_hora: 8,  uma_hora: 15, hora_adicional: 6, diaria_12h: 30, diaria_24h: 30}
+  nova:                      # a partir de 01/06/2026, unificada
+    vigencia_de: 2026-06-01
+    origem: fabio
+    carro:          {meia_hora: 10, uma_hora: 15, hora_adicional: 8, diaria_12h: 30, diaria_24h: 60}
+    moto:           {meia_hora: 8,  uma_hora: 12, hora_adicional: 8, diaria_12h: 20, diaria_24h: 40}
+  carga_descarga:
+    tarifa_fixa: 5.00        # NÃO reajustada — atravessa o corte inalterada
+    limite_minutos: 15
+    cobranca_se_operador_esquece: meia_hora_tabela_normal
+    origem: fabio
+  mensalidade:               # seção 29.1 — confirmado por Fabio 28/08/2026
+    origem: fabio
+    # ⚠ NÃO muda no marco de 01/06. Vigora desde 2025, antes da janela.
+    #   45,4% da receita total do dataset e, até 28/08/2026, existia SÓ no código.
+    moto:
+      valor_legado: 180.00           # mantido para parte dos clientes
+      valor_atual: 200.00
+      # não existem outros valores; base ~meio a meio entre os dois
+    carro:
+      valor_tabela: 310.00
+      faixa_praticada: [250.00, 310.00]
+      politica_de_desconto: discricionaria   # ⚠ SEM regra formalizada
+      # tendência observada: mais vagas => mais desconto por vaga
+      desconto_medido_v12:
+        1_vaga: 0.055
+        2_vagas: 0.097
+        3_vagas: 0.145
+        media: 0.071
+      desconto_concedido_mes: 2081.00        # sobre 95 vagas de carro
+      # => ~R$ 25 mil/ano de desconto sem critério escrito
+
+  hotel_diaria:
+    antes_do_marco: 40.00
+    apos_o_marco: 50.00
+    origem: fabio            # confirmado 28/08/2026
+
+# ----------------------------------------------------------------------------
+# CONVÊNIO SELO — seções 25.1 e 29
+# ----------------------------------------------------------------------------
+selo:
+  preco_venda_antes: 8.00    # cartela de 50 = R$ 400
+  preco_venda_apos: 9.00     # cartela de 50 = R$ 450
+  cartela_unidades: 50
+  origem: fabio
+  desconto: uma_hora_tabela_vigente
+  desconto_limitado_pela_conta: true   # excedente transborda e evapora
+  lojas_conveniadas_estimadas: [15, 20]
+  # ⚠ O selo é vendido ABAIXO do que desconta (R$ 9 contra R$ 15).
+  #   1 selo isolado dá prejuízo em 100% dos casos, por construção:
+  #   exigiria conta < R$ 9 e o mínimo da tabela é R$ 10.
+
+# ----------------------------------------------------------------------------
+# CANAL DE PAGAMENTO — seções 2 e 3
+# ----------------------------------------------------------------------------
+pagamento:
+  # ⚠ CANAL E FORMA NÃO PODEM SER SORTEADOS DE FORMA INDEPENDENTE.
+  #   Sortear a FORMA primeiro e DERIVAR o canal. Foi o sorteio paralelo que
+  #   produziu "moto no Totem" (v10) e "PIX no Totem" (v12).
+  totem:
+    formas_aceitas: [cartao_credito, cartao_debito]
+    aceita_pix: false
+    exclusivo_para: avulso_regular_carro
+  caixa:
+    formas_aceitas: [cartao_credito, cartao_debito, pix, dinheiro]
+    obrigatorio_para: [convenio_selo, passe_livre, moto, recarga_ev, carga_descarga]
+    # ⚠ o MENSALISTA INADIMPLENTE não está nesta lista, e isso é deliberado
+    #   (seção 36.6): com a mensalidade vencida a cancela não abre sozinha, ele
+    #   aperta o botão, retira ticket e paga no totem como qualquer avulso.
+    #   O registro sai como "mensalista (nome) — entrada como avulso".
+  elegivel_totem_alem_do_avulso: [mensalista_inadimplente]
+  chance_cartao_avulso: 0.70
+  chance_totem_dado_cartao: 0.90     # aderência-alvo
+  aderencia_totem_medida_v12: 0.903  # v12 · denominador canônico da seção 3.1
+  aderencia_totem_medida_v13: 0.892  # v13 · já incluindo o inadimplente (36.6)
+  # ⚠ os dois números são de DATASETS diferentes e de denominadores que diferem
+  #   pela inclusão do inadimplente. Não comparar um com o outro.
+  # ⚠ o denominador EXCLUI: hotel, moto, selo, recarga EV, inadimplente E
+  #   CARGA E DESCARGA (a exclusão mais fácil de esquecer, porque o segmento
+  #   não tem rótulo). Com C&D dentro, cai para 0,831. Amplitude total das
+  #   definições: 36 pontos (0,542 a 0,903).
+  origem: fabio
+
+# ----------------------------------------------------------------------------
+# BASE DE CLIENTES — cadastro do gerador
+# ----------------------------------------------------------------------------
+base_clientes:
+  origem: arbitrado          # ⚠ o TAMANHO da base é escolha de modelagem
+  lojistas: 30
+  moradores: 50
+  dormentes: 3               # seção 11.3 — origem: fabio
+  vagas_lojista:  {valores: [1, 2, 3],    pesos: [0.45, 0.35, 0.20]}
+  vagas_morador:  {valores: [1, 2, 3, 4], pesos: [0.88, 0.08, 0.03, 0.01]}
+  chance_carro_lojista: 0.85
+  chance_carro_morador: 0.90
+  # ⚠ v13: a FROTA ELÉTRICA é contada, não sorteada. No v12 ela emergia de
+  #   duas probabilidades por cliente e o total dependia da seed — com 42 deu
+  #   7 veículos e o volume de recarga bateu com o app por sorte. Com outra
+  #   seed daria 22 e o volume triplicaria. O ancoradouro é a série real do
+  #   Clamper (seção 6.2), então o número de veículos é que precisa ser fixo.
+  frota_ev_mensalista: 5           # antes de 01/06
+  chance_ev_lojista: 0.20          # só decide QUEM da frota é lojista
+  chance_ev_morador: 0.15
+  carros_com_placa_danificada: 1   # por perfil — seção 23, "1-2 casos conhecidos"
+  personas_ev_dependentes: 2       # entram em 2026-06-01, seção 6.3
+
+# ----------------------------------------------------------------------------
+# CANCELAS — seção 17
+# ----------------------------------------------------------------------------
+cancelas:
+  origem: fabio
+  cancela_1: {local: subsolo, sentido: entrada, horario: "24h"}
+  cancela_2: {local: subsolo, sentido: saida,   horario: "24h"}
+  cancela_3:
+    local: terreo
+    sentido: saida
+    seg_sex: "08:30-19:00"
+    sabado: "08:00-16:00"
+    domingo_feriado: fechado
+    nunca_usada_por: [moto, carga_descarga]
+
+# ----------------------------------------------------------------------------
+# SEGMENTOS DE CLIENTE
+# ----------------------------------------------------------------------------
+segmentos:
+
+  trabalhador:               # Lojista / Escritório — seção 11
+    origem: fabio
+    dorme_fora: true
+    chegada: "07:00-09:30"
+    saida: "17:00-19:30"
+    sabado_chegada: "07:30-09:30"
+    sabado_saida: "15:00-17:00"
+    chance_trabalha_sabado: 0.90     # confirmado 28/08/2026
+    chance_trabalha_feriado: 0.45    # seção 13: 40-50% das lojas abrem
+    trabalha_domingo: false
+    entradas_por_dia_por_veiculo: 1.0
+    feriado_chegada: "08:00-10:00"
+    feriado_saida: "14:00-17:00"
+    # --- comportamento híbrido, seção 11.2 (confirmado 28/08/2026) ---
+    clientes_com_carro_garagem: [2, 3]   # de 30 clientes lojistas
+    # cliente com 2+ vagas deixa UM veículo parado em definitivo e circula
+    # com o outro. O veículo parado faz ~0 entradas/dia, não 1,0.
+    # ⚠ VALIDADOR: isso gera estadias LONGAS num cliente rotulado Lojista.
+    #   Não é erro de pareamento. Distinguir por Veiculo_ID, nunca por duração.
+    carro_garagem_entradas_por_dia: 0.0
+    origem_hibrido: fabio
+
+  morador:                   # seção 11 + seção 32 (prédio MCMV interligado)
+    origem: fabio
+    dorme_dentro: true
+    viagens_por_dia: [1, 2]
+    chegada_inicial: "06:00-09:00"
+    primeira_saida: "07:00-12:00"
+    intervalo_entre_viagens_h: [1.0, 3.0]
+    duracao_da_viagem_h: [1.5, 6.0]
+    limite_retorno_h: 23.75          # o dia FECHA — nada transborda a meia-noite
+    reducao_fim_de_semana:           # seção 11.1b — inversamente ligada à frequência
+      alta_frequencia: 1.00          # quem sai mais mantém o volume
+      demais: 0.75
+    entradas_por_dia_por_veiculo: [1.44, 1.57]
+    # --- viagens, seção 11.2 (confirmado 28/08/2026) ---
+    clientes_viajantes: [2, 3]       # de 50 clientes moradores
+    frequencia: baixa                # "pouca frequência" — ver duracao abaixo
+    modos_de_viagem:
+      leva_o_carro:                  # vaga VAZIA, zero eventos
+        peso: 0.5
+      deixa_o_carro:                 # vaga OCUPADA, zero eventos
+        peso: 0.5
+    # ⚠ As duas assinaturas são OPOSTAS na ocupação e IDÊNTICAS na contagem
+    #   de eventos. Métrica baseada só em contagem trata as duas igual e erra.
+    duracao_viagem_dias: [3, 7]      # arbitrado — Fabio disse "alguns dias"
+    viagens_por_semestre: [2, 4]     # arbitrado — "pouca frequência"
+    origem_viagem: fabio             # o comportamento; a calibragem é arbitrada
+    # ⚠ PENDENTE: variação semanal do morador comum. Hoje são 81,7
+    #   entradas/dia em todos os tipos de dia, variância ~0.
+    # --- fim de semana, seção 11.1b (confirmado 28/08/2026) ---
+    variacao_fim_de_semana: heterogenea
+    # ⚠ NÃO aplicar um fator único ao segmento. A redução de saídas no fim de
+    #   semana é INVERSAMENTE relacionada à frequência de base do cliente:
+    #   - maioria (baixa frequência): reduz as saídas no fim de semana
+    #   - alta frequência: MANTÉM o mesmo volume
+    #   Isso cria subestrutura dentro do perfil Morador — relevante p/ Etapa 3.
+
+  hospede_hotel:             # Passe Livre — seções 25 e 25.1
+    origem: fabio            # distribuição confirmada em 28/08/2026
+    diarias_distribuicao:
+      1: 0.45                # boa parte fica apenas 1 diária
+      2: 0.25
+      3: 0.15
+      4: 0.10
+      "5-7": 0.05            # casos raros
+    diarias_media_esperada: 2.1
+    hoteis: [hotel_a, hotel_b, hotel_c, hotel_d]   # nomes removidos da versão pública
+    concentracao_hotel_principal: 0.90
+    pagamento: caixa_obrigatorio
+    chegadas_por_dia: [2, 6]
+    hora_entrada: [12, 22]
+    checkout: "08:00-12:00"          # a diária termina no check-out, não em 24h
+    chance_late_checkout: 0.15
+    late_checkout_h: [1, 6]
+    chance_recarga_ev: 0.30          # multiplicador sobre chance_ev do mês
+    # ⚠ MAIOR ALAVANCA DE RECEITA DO DATASET: ~29% da receita total e >50%
+    #   da transacional. O v12 usava randint(2,4) — média 3,0 e nenhum
+    #   hóspede de 1 diária. Corrigir infla/desinfla a receita em ~45%.
+
+  dormente:                  # seção 11.3 — terceiro perfil (28/08/2026)
+    origem: fabio
+    clientes: 3
+    veiculos: {carro: 2, moto: 1}
+    motivo: [carro_com_defeito_sem_verba, carro_com_defeito_sem_verba, moto_abandonada]
+    paga_boleto: true                # mensalidade integral, todo mês
+    entradas_por_dia_por_veiculo: 0.0
+    eventos_de_cancela: 0            # só existe a linha de Renovação Mensal
+    vaga_ocupada_24_7: true
+    cobertura_de_uso: 0.0            # abaixo do trabalhador (0,81) e do morador (0,97)
+    um_deles_atrasa_sempre: true
+    # ⚠ PONTO CEGO (seção 11.4): o cliente dormente que atrasa NUNCA gera
+    #   Status=Bloqueado, porque o bloqueio acontece na cancela e o veículo
+    #   nunca passa por ela. Ele só paga juros. A inadimplência medida pelo
+    #   log de movimento subestima justamente o caso crônico.
+    #   => taxa de inadimplência vem do ERP, nunca do log de cancela.
+    # ⚠ BASE: com os dormentes, clientes 80 -> 83 e veículos 109 -> 112.
+    #   "mensalistas observados em movimento" != "mensalistas contratados".
+
+  locacao_de_espaco:         # seção 38 — empresa de logística
+    origem: fabio
+    presente_de: 2026-02-13
+    presente_ate: 2026-05-31         # saiu no marco; ausente de 01/06 em diante
+    dias_de_operacao: [seg, ter, qua, qui, sex, sab]   # domingo NÃO opera
+    janela_principal: "12:00-16:00"
+    cobranca: locacao_de_area         # NÃO por vaga — ~1/3 do subsolo
+    valor_boleto: 3000.00             # ~R$ 3.000/mês (ordem de grandeza, fabio)
+    reajuste_proposto_recusado: 5000.00   # +67%; a recusa causou a saída
+    # economia unitária (seção 38.8): R$ 100/moto contra R$ 267 do mensalista
+    # de moto comum — pagava ~37% da tarifa padrão por unidade ocupada.
+    motos: 30
+    cartoes_de_acesso: 30             # fixos por motoboy, cadastrados só com
+                                      # os dados da EMPRESA (gerência não quis
+                                      # vincular pessoa a cartão)
+    carro: {modelo: Renault Kangoo, usa_elevador: true, coletas_por_dia: [1, 2]}
+    carrinhos_de_carga: 5             # sem dono fixo, alternados entre motoboys
+    motos_com_voltas_reais: 5
+    voltas_reais_por_moto: [2, 3]
+    voltas_por_carrinho_por_dia: 4    # confirmado como condizente (fabio)
+    atividade_sabado: 0.55            # confirmado como condizente (fabio)
+    eventos_por_dia_util_estimado: 130
+    fracao_movimento_fantasma: 0.31   # pedestre com carrinho usando cartão de moto
+    # ⚠⚠ MOVIMENTO FANTASMA (seção 38.2). O motoboy passa a PÉ com o carrinho
+    #    usando o cartão da moto. O log registra saída/entrada de MOTO; a moto
+    #    não sai do lugar. Consequências:
+    #    1. a soma cumulativa SUBESTIMA a ocupação de moto, com erro máximo
+    #       entre 12h e 16h — exatamente o pico;
+    #    2. a "permanência" desses cartões alterna estadia real e ausência a pé;
+    #    3. no clustering esses ~30 Veiculo_ID parecem "morador hiperativo";
+    #    4. como os carrinhos são ALTERNADOS, o fantasma se espalha pelos 30
+    #       cartões e nenhum fica anômalo o bastante para ser sinalizado.
+    # ⚠ CALENDÁRIO INVERTIDO (38.4): mais movimento em dia útil que no sábado,
+    #   ao contrário de todo o resto da garagem. Achata o pico de sábado no
+    #   agregado até 31/05 (razão sábado/dia útil vai de 1,15x para ~0,98x).
+
+  avulso_regular:            # seção 13
+    origem: fabio
+    por_dia:
+      dia_util: 25.4
+      sabado: 49.7           # 1,96x o dia útil, com janela comercial MENOR
+      domingo: 19.8
+      feriado: 23.5          # deve ficar entre domingo e dia útil
+    permanencia_mediana_h: 1.81
+    permanencia_normal: {media_min: 120, desvio_min: 90, minimo_min: 16}
+    chance_carro: 0.80
+    chance_selo: 0.20
+    selos_por_uso: [1, 3]
+    chance_recarga_ev: 0.10          # multiplicador sobre chance_ev do mês
+    entradas_por_dia:                # faixas sorteadas; média bate com por_dia
+      dia_util: [15, 35]
+      sabado:   [40, 60]
+      domingo:  [10, 30]
+      feriado:  [19, 26]
+    hora_entrada:                    # distribuição por tipo de dia
+      dia_util: {tipo: normal, media: 14, desvio: 3, limites: [8, 20]}
+      sabado:   {tipo: uniforme, limites: [8, 14]}
+      domingo:  {tipo: uniforme, limites: [9, 20]}
+      feriado:  {tipo: normal, media: 13, desvio: 3, limites: [9, 19]}
+    cauda_fora_do_horario_fracao: 0.03   # seção 13 — visitantes e prestadores
+    janela_entrada: "08:00-20:00"   # núcleo, acompanha o comércio (seção 13)
+    cauda_fora_do_horario: true     # confirmado 28/08/2026 — NÃO usar corte duro
+    causas_da_cauda: [visitante_de_morador_do_entorno, prestador_de_servico]
+
+  carga_descarga:            # seção 30
+    origem: fabio
+    existe_em_todo_o_periodo: true   # CORRIGIDO 28/08/2026
+    fracao_dos_avulsos: 0.10
+    permanencia_minutos: [3, 15]
+    saida_sempre_pelo_subsolo: true
+    aderencia_operador: 0.70         # medida no v12, estável nos 2 regimes
+    # ⚠ PENDENTE v13: criar Subcategoria própria. Hoje o segmento fica
+    #   escondido dentro de Avulso Regular e só é identificável por
+    #   permanência <= 15 min + saída pelo subsolo.
+
+# ----------------------------------------------------------------------------
+# INADIMPLÊNCIA — seção 36
+# ----------------------------------------------------------------------------
+inadimplencia:
+  origem: fabio
+  dia_vencimento: 10
+  lista_enviada_pelo_escritorio: true      # mesmo dia do vencimento
+  aviso_ao_cliente: [presencial_na_chegada, whatsapp]
+  aviso_registrado_no_sistema: false       # limitação declarada
+  bloqueio_dias_uteis_apos_vencimento: 3
+  bloqueio_automatico_a_partir_de: 2026-06-01   # ⚠ NÃO existe antes disso
+  antes_do_marco:
+    havia_bloqueio: false
+    tratamento: juros_no_boleto
+    percentual_juros: null                 # baixo, não quantificado — não modelar
+  clientes_em_atraso_por_mes: [2, 3]
+  # ⚠ NÃO sortear de forma independente a cada mês. O sorteio sem memória
+  #   dá a taxa mensal certa e um acumulado absurdo (25% da base no
+  #   semestre, com ZERO reincidentes). Fabio: "geralmente é o mesmo".
+  modelo: cadeia_de_markov_2_estados
+  p_atrasa_dado_em_dia: 0.015
+  p_atrasa_dado_atrasou: 0.70
+  dias_ate_regularizar_apos_bloqueio: [1, 3]
+  # bloqueio NÃO impede a entrada: abre ticket temporário e cobra como avulso
+  bloqueio_impede_entrada: false
+
+# ----------------------------------------------------------------------------
+# RECARGA EV — seção 6, calibrado contra o app Clamper Mobi Manager
+# ----------------------------------------------------------------------------
+recarga_ev:
+  origem: medido
+  fonte: "Clamper Mobi Manager, 12 meses lidos em 26/08/2026"
+  kwh_por_sessao_medio: 10.71
+  duracao_h_media: 1.82
+  duracao_h_desvio: 0.45
+  duracao_h_limites: [0.4, 3.2]
+  potencia_kw: [5.4, 6.4]           # medido: 5,90 kW médio
+  chance_base: 0.126                # nível de fev/2026, recalibrado no v13
+  # ⚠ o v12 usava 0,15 e batia com o app por acaso: o volume dependia de
+  #   quantos veículos elétricos a seed sorteava (7 com a seed 42, 22 com
+  #   outra). No v13 a frota é contada (base_clientes.frota_ev_mensalista) e
+  #   a chance foi recalibrada contra a série real com a frota fixa.
+  fator_adocao_mes: {2: 1.00, 3: 1.15, 4: 1.65, 5: 1.70, 6: 1.75, 7: 1.80, 8: 4.75}
+  # ⚠ ago = 4,75 e não 1,80: o v12_ev_recalibrado.md registrou 1,80, mas o
+  #   CÓDIGO do v12 usava 4,75 — calibrado contra as ~4,8 recargas/dia reais
+  #   de agosto. Sexta divergência código/documento encontrada no projeto.
+  persona_ev_dependente_recargas_dia: 0.38   # carrega a cada ~2,6 dias
+  tarifa_por_kwh:                   # seção 6.4b — confirmado 28/08/2026
+    origem: fabio
+    reajuste: trimestral            # única tarifa da casa com cadência definida
+    2025-09: 1.99                   # instalação
+    2025-10: 1.99
+    2025-11: 1.99
+    2025-12: 2.20
+    2026-01: 2.20
+    2026-02: 2.20
+    2026-03: 2.40                   # ⚠ o gerador usa 2.39 em março — corrigir
+    2026-04: 2.40
+    2026-05: 2.40
+    2026-06: 2.50
+    2026-07: 2.50
+    2026-08: 2.50
+  custo_do_kwh:                     # seção 6.4c
+    origem: referencia_externa      # ⚠ NÃO é dado da operação
+    fonte: "Enel SP residencial, reajuste de jul/2026"
+    tusd: 0.472
+    te: 0.317
+    sem_impostos: 0.789
+    com_impostos: [0.99, 1.03]      # ICMS + PIS + COFINS somam 25-30%
+    # ⚠ TRÊS RESSALVAS:
+    #   1. tarifa RESIDENCIAL; o estacionamento é comercial e pode estar em
+    #      Grupo A, com demanda contratada (componente fixa fora do R$/kWh);
+    #   2. valor de jul/2026; a série de tarifas cobradas começa em set/2025;
+    #   3. com solar o custo marginal NÃO é único — depende da hora.
+    margem_estimada_kwh: 1.49       # ~60% sobre PV de 2,50 — MESMA EM QUALQUER HORÁRIO
+    # ⚠ CORRIGIDO 28/08/2026. Uma versão anterior deste arquivo trazia três
+    #   cenários de margem (60% a 100%) conforme o horário da recarga, com a
+    #   premissa de excedente solar ao meio-dia. ERRADO: a geração nunca cobre
+    #   o consumo (seção 39.2), o estacionamento é importador líquido o tempo
+    #   todo, e o custo MARGINAL do próximo kWh é sempre a tarifa cheia.
+    #   A solar reduz o custo MÉDIO do prédio, não o marginal da recarga.
+    # ⚠ EM ABERTO: se a modalidade for horo-sazonal (Grupo A), a ponta
+    #   (~17h-20h) é mais cara e a recarga do fim de tarde custaria mais — por
+    #   motivo tarifário, não solar. Depende da conta de energia.
+  fev_2026_e_outlier: true          # 6,19 kWh/sessão contra média de 10,71
+  granularidade_de_sessao_disponivel: false
+  # => hora de pico da tomada e fila NÃO são validáveis. Não reportar.
+
+# ----------------------------------------------------------------------------
+# ENERGIA — seção 39
+# Não entra no gerador (o dataset não modela consumo), mas condiciona a
+# leitura de margem da recarga e do custo por veículo.
+# ----------------------------------------------------------------------------
+energia:
+  origem: fabio
+  geracao_solar_instalada: true
+  motivo: custo_energetico_dos_elevadores
+  zera_a_conta: false               # reduz significativamente, não zera
+  potencia_instalada: null          # ⚠ desconhecido
+  geracao_mensal: null              # ⚠ desconhecido
+  possui_baterias: null             # ⚠ desconhecido
+  modalidade_de_compensacao: null   # ⚠ desconhecido
+  cobre_o_consumo: false          # NUNCA — o propósito era reduzir, não zerar
+  # ⚠⚠ ERRO CORRIGIDO 28/08/2026: uma versão anterior afirmava DESCASAMENTO de
+  #   curvas (elevador com dois picos, solar com um ao meio-dia), derivado do
+  #   log de movimento. Mas esse log é o DATASET SINTÉTICO, cujas janelas do
+  #   trabalhador são constantes fixas no gerador: (7.0,9.5) e (17.0,19.5).
+  #   Era o gerador citado como observação do mundo real.
+  #   Fabio observa o OPOSTO: pico de recarga coincide com pico de elevador.
+  # => como a geração nunca cobre o consumo, o custo MARGINAL é sempre a
+  #    tarifa cheia. Solar reduz custo MÉDIO, não marginal. Sem cenário de
+  #    "energia própria a custo zero" para a recarga.
+  # ⚠ REGRA GERAL: o perfil HORÁRIO do v12 é design do gerador, não evidência.
+  #    Não usar para nenhuma conclusão sobre o mundo real.
+  recarga_ev_na_janela_solar: maioria    # confirmado por Fabio 28/08/2026
+  excecao: morador_ev_dependente_carrega_fora_da_janela
+  origem_desse_item: fabio_observacao    # NÃO verificável no dado: o Clamper
+                                         # só dá totais mensais, sem horário.
+  # ⚠ RISCO PROSPECTIVO (seção 39.3.1): o Morador saltou de ~15% para ~45%
+  #   das sessões entre mai e jun/2026, e a seção 6.3 mostra que TODO o
+  #   crescimento vem de elétricos entrando na base de mensalistas.
+  #   => a fatia que mais cresce é a que menos usa geração própria.
+  #   Margem média da recarga tende a CAIR com o volume subindo.
+
+# ----------------------------------------------------------------------------
+# IDENTIFICAÇÃO DE VEÍCULO — seções 4 e 23
+# ----------------------------------------------------------------------------
+identificacao:
+  origem: fabio
+  camera_le_apenas_frente: true
+  moto_nunca_tem_placa_lida: true
+  chance_carro_placa_danificada: 0.03
+  mensalista_moto_usa_cartao_acesso: true
+  chance_cartao_vaga_trabalhador: 0.40
+  chance_cartao_vaga_morador: 0.05
+  # mensalista sem cartão de vaga vai sempre para o elevador 2 (seção 17),
+  # mas o sistema NÃO registra elevador — não verificável no dado.
+
+# ----------------------------------------------------------------------------
+# CALENDÁRIO
+# ----------------------------------------------------------------------------
+feriados_2026:
+  - 2026-02-17
+  - 2026-04-03
+  - 2026-04-21
+  - 2026-05-01
+  - 2026-06-04
+  - 2026-07-09
+
+horario_comercial:            # seção 13 — Rua Santa Efigênia
+  origem: fabio
+  seg_sex:  {abertura: "08:00-09:00", fechamento: "17:00-18:00"}
+  sabado:   {abertura: "08:00-09:00", fechamento: "15:00-16:00"}
+  domingo:  fechado
+  feriado:  {fracao_lojas_abertas: 0.45}
+
+# ----------------------------------------------------------------------------
+# ASSERÇÕES DO VALIDADOR
+# Cada linha vira um teste. As marcadas como NOVO não existiam na suíte de 12.
+# ----------------------------------------------------------------------------
+asercoes:
+  - id: transicoes_invalidas
+    regra: "por Veiculo_ID, excluindo Status=Bloqueado, nunca Entrada→Entrada nem Saída→Saída"
+    esperado: 0
+  - id: saida_sem_entrada
+    esperado: 0
+  - id: moto_com_placa_lida
+    esperado: 0
+  - id: moto_no_totem
+    esperado: 0
+  - id: terreo_fora_da_janela
+    esperado: 0
+  - id: moto_pelo_terreo
+    esperado: 0
+  - id: pix_no_totem                          # NOVO — falhava no v12 (21 casos)
+    esperado: 0
+  - id: totem_forma_permitida                 # NOVO — generaliza o anterior
+    regra: "Local_Pagamento='Totem' ⇒ Forma_Pagamento ∈ formas_aceitas do totem"
+    esperado: 0
+  - id: bloqueio_antes_do_marco               # NOVO — falhava no v12 (122 casos)
+    regra: "nenhum Status=Bloqueado antes de marco_modernizacao.data"
+    esperado: 0
+  - id: motivo_convenio_com_valor_residual    # NOVO — falhava no v12 (3 casos)
+    regra: "Motivo='CONVÊNIO/LIBERADO' ⇒ Valor_Cobrado_Total = 0"
+    esperado: 0
+  - id: colunas_constantes                    # NOVO — pega Regra_Acesso
+    regra: "nenhuma coluna com um único valor distinto"
+    esperado: 0
+  - id: carga_descarga_rotulada               # NOVO
+    regra: "existe Subcategoria própria para Carga e Descarga"
+  - id: hotel_tem_1_diaria                    # NOVO
+    regra: "fração de estadias de hotel < 24h dentro de ±5pp do peso declarado"
+  - id: inadimplentes_reincidentes            # NOVO
+    regra: "≥50% dos clientes com atraso aparecem em mais de um mês"
+  - id: ocupacao_dentro_da_capacidade         # NOVO — era o sintoma do bug de pareamento
+    regra: "ocupação simultânea ≤ capacidade, por tipo de veículo"
+  - id: logistica_ausente_apos_marco       # NOVO — seção 38
+    regra: "nenhum evento do Cliente_ID de locação de espaço a partir de 2026-06-01"
+    esperado: 0
+  - id: logistica_sem_domingo              # NOVO — seção 38
+    regra: "nenhum evento da empresa de logística em domingo"
+    esperado: 0
+  - id: moto_capacidade_por_regime         # NOVO — seção 38.3
+    regra: "ocupação simultânea de moto <= 60 nos DOIS regimes; pico pré-junho > pico pós-junho"
+  - id: sazonalidade_semanal_muda_no_marco # NOVO — seção 38.4
+    regra: "razão sábado/dia útil de movimentos totais é menor antes de 01/06 do que depois"
+  - id: dormentes_sem_movimento            # NOVO — seção 11.3
+    regra: "exatamente 3 clientes com Renovação Mensal e ZERO eventos de cancela (2 carro, 1 moto)"
+  - id: dormente_inadimplente_nao_bloqueia # NOVO — seção 11.4
+    regra: "o cliente dormente em atraso não gera nenhum Status=Bloqueado"
+    esperado: 0
+  - id: base_contratada_vs_observada       # NOVO — seção 11.3
+    regra: "nº de Cliente_ID com boleto > nº de Cliente_ID com movimento, por exatamente 3"
+  - id: perfis_hibridos_existem            # NOVO — seção 11.2
+    regra: "2-3 veículos de lojista com ~0 entradas/dia; 2-3 moradores com janelas de 3-7 dias sem eventos"
+  - id: lojista_longo_e_por_cliente        # NOVO — evita falso positivo
+    regra: "estadia de lojista > 24h só é aceita se o Veiculo_ID for marcado como carro-garagem"
+  - id: sabado_trabalhador
+    regra: "fração de trabalhadores ativos no sábado ≈ 0,90 ± 0,05"
+  - id: ordem_avulso_por_tipo_de_dia
+    regra: "domingo < feriado < dia útil"
+  - id: mensalidade_estavel_no_marco       # NOVO — seção 29.1
+    regra: "mensalidade média por vaga não muda em 2026-06-01 (só a tabela de avulso muda)"
+  - id: mensalidade_valores_permitidos     # NOVO — seção 29.1
+    regra: "moto ∈ {180, 200} por vaga; carro ∈ [250, 310] por vaga"
+  - id: inadimplente_pode_usar_totem        # NOVO — seção 36.6
+    regra: "mensalista inadimplente NÃO é caixa-obrigatório: paga no totem"
+    esperado: "> 0 pagamentos no totem"
+  - id: aderencia_totem_denominador         # NOVO — seções 3.1 e 36.6
+    regra: "denominador = Avulso Regular + Mensalista Inadimplente, carro, sem
+            selo, sem recarga EV, sem C&D, cartão"
+    esperado: "dentro de ±2 pp de pagamento.aderencia_totem_medida_v13"
+  - id: ev_kwh_por_sessao
+    regra: "kWh/sessão dentro de ±5% de recarga_ev.kwh_por_sessao_medio"
+
+# ----------------------------------------------------------------------------
+# PENDÊNCIAS — parâmetros ainda arbitrados, sem respaldo externo
+# ----------------------------------------------------------------------------
+pendencias:
+  # ordenadas por risco. As duas primeiras são de calibragem fina de um
+  # comportamento já confirmado — baixo risco, afetam 2-3 clientes cada.
+  - "recarga_ev.custo_do_kwh — a referência da Enel (6.4c) é RESIDENCIAL e externa. Falta a conta real: modalidade tarifária, demanda contratada se Grupo A, e histórico desde set/2025"
+  - "energia.modalidade_tarifaria — se for horo-sazonal (Grupo A), a ponta ~17h-20h é mais cara e a recarga do fim de tarde custaria mais. Depende da conta de energia (39.3)"
+  - "energia.geracao_solar — potência instalada, geração mensal, baterias e modalidade de compensação são todos desconhecidos (39.1). Impede quantificar a economia; o descasamento de curvas (39.2) segue defensável"
+  # RESOLVIDA em 28/08/2026: recarga_ev_na_janela_solar — a maioria já ocorre
+  #   no pico solar (Fabio), com exceção do morador EV-dependente (39.3)
+  - "morador.duracao_viagem_dias — não segue padrão E a operação não consegue observar (seção 11.5b). Faixa de 3-7 dias mantida como arbitrada; risco baixo, afeta 2-3 clientes"
+  # RESOLVIDAS em 28/08/2026:
+  #   recarga_ev.tarifa_por_kwh — cronograma trimestral confirmado (6.4b)
+  #   morador.variacao_por_tipo_de_dia — padrão heterogêneo confirmado (11.1b)
+  #   avulso_regular.janela_entrada — causas da cauda identificadas (seção 13)
+  #   faturamento antes de 06/2026 — não era limitação: o boleto nunca mudou,
+  #     só a entrega deixou de ser impressa (seção 37)
+  # RESOLVIDAS em 28/08/2026: locacao_de_espaco.valor_boleto (~R$ 3.000, fabio),
+  # voltas_por_carrinho_por_dia e atividade_sabado (confirmados como condizentes)
+  # RESOLVIDAS em 28/08/2026: precos.hotel_diaria (confirmado),
+  # morador.chance_noite_fora (substituído pelo modelo de viagens, 11.2)
