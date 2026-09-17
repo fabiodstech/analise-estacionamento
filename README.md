@@ -14,6 +14,8 @@ conhecimento de quem opera a garagem, mas sem acesso ao dado dela.
   <a href="#como-rodar"><b>Rodar localmente</b></a>
 </p>
 
+![demonstração do app](imagens/demo.gif)
+
 > **No app tem uma aba chamada "Faça o erro".** Ela deixa você reproduzir três dos
 > erros deste projeto mexendo em controles — a métrica que muda 33 pontos conforme o
 > denominador, a ocupação que estoura a capacidade física do prédio, e a vantagem do
