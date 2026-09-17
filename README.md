@@ -8,7 +8,7 @@ auditoria, EDA, modelo preditivo e um painel operacional. Feito com acesso ao
 conhecimento de quem opera a garagem, mas sem acesso ao dado dela.
 
 <p align="center">
-  <a href="#"><b>▶ Abrir o app</b></a> ·
+  <a href="https://fabiods-estacionamento.streamlit.app/"><b>▶ Abrir o app</b></a> ·
   <a href="#cinco-achados"><b>Os achados</b></a> ·
   <a href="docs/bastidores.md"><b>Os erros que eu cometi</b></a> ·
   <a href="#como-rodar"><b>Rodar localmente</b></a>
