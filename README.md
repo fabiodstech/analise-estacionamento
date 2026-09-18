@@ -282,5 +282,5 @@ elétrica** — e cada uma está marcada como tal na documentação.
 
 <p align="center">
   <a href="https://instagram.com/fabiods.tech">@fabiods.tech</a> ·
-  <a href="(https://www.linkedin.com/in/fabiodstech/)">LinkedIn</a>
+  <a href="https://www.linkedin.com/in/fabiodstech/">LinkedIn</a>
 </p>
